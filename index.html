@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nutri Retos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Lilita+One&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Concepto: tablero de juego con stickers. Cada reto es una pantalla de una sola tarea; tarjetas gruesas con sombra dura, memes con letras estilo clásico. Un solo look claro, elegido a propósito. */
+:root{
+  --paper:#FFF1CC; --ink:#1B1B2F; --card:#FFFFFF;
+  --tomato:#FF5B3A; --banana:#FFD23F; --leaf:#22B866; --berry:#6C3BFF; --sky:#46B9FF;
+  --c-leaf:#7DE0A8; --c-pink:#FFB3D6; --c-sky:#8AD3FF; --c-banana:#FFD23F; --c-lav:#CFC0FF; --c-tomato:#FF9B80;
+  --f-display:'Lilita One','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-meme:'Anton','Impact','Arial Narrow',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(27,27,47,.12) 1.4px,transparent 1.6px);
+  background-size:22px 22px;
+  color:var(--ink);
+  font:800 16px/1.4 var(--f-body);
+  padding-block:12px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+#app{max-width:760px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;line-height:1.05}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid var(--berry);outline-offset:2px}
+
+/* botones */
+.btn{font-family:var(--f-display);font-size:1.15rem;background:var(--banana);color:var(--ink);border:3px solid var(--ink);border-radius:14px;padding:10px 18px;box-shadow:0 4px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.alt{background:var(--card)}
+.btn.go{background:var(--leaf)}
+.btn.small{font-size:.95rem;padding:6px 12px;border-radius:12px;box-shadow:0 3px 0 var(--ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+
+/* barra superior */
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.top .ttl{flex:1;min-width:0;font-family:var(--f-display);font-size:1.35rem;text-align:center;line-height:1.05}
+
+/* inicio */
+.hero{display:grid;grid-template-columns:1fr 190px;gap:16px;align-items:center;margin-bottom:18px}
+.logo{font-family:var(--f-display);font-size:clamp(2.6rem,11vw,4.2rem);line-height:.9;letter-spacing:.01em;transform:rotate(-2deg);text-shadow:3px 3px 0 var(--banana),5px 5px 0 var(--ink)}
+.logo span{color:var(--tomato)}
+.sub{margin-top:14px;font-size:1.05rem}
+.namebox{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.namebox input{flex:1 1 150px;min-width:0;font:inherit;font-weight:800;border:3px solid var(--ink);border-radius:12px;padding:8px 12px;background:var(--card);color:var(--ink)}
+.rank{background:var(--card);border:3px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);padding:12px 14px;margin-bottom:18px}
+.rank .rt{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.rank .rt b{font-family:var(--f-display);font-weight:400;font-size:1.3rem}
+.xpbar{height:16px;border:3px solid var(--ink);border-radius:99px;background:var(--paper);overflow:hidden;margin-top:8px}
+.xpbar i{display:block;height:100%;background:var(--leaf);transition:width .5s}
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.reto{background:var(--c);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);padding:14px;text-align:left;display:grid;gap:6px;transition:transform .1s,box-shadow .1s}
+.reto:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+.reto:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.reto .em{font-size:2.4rem;line-height:1}
+.reto h3{font-size:1.4rem}
+.reto p{font-size:.95rem;font-weight:600}
+.reto .st{font-size:1.4rem;letter-spacing:.1em}
+.reto.lock{background:#E4DCC3;cursor:not-allowed;box-shadow:5px 5px 0 rgba(27,27,47,.5);border-color:rgba(27,27,47,.5);color:rgba(27,27,47,.75)}
+.win{background:var(--leaf);border:3px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);padding:14px;margin-bottom:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+
+/* juego */
+.play{display:grid;gap:14px}
+.hud{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-display);font-size:1.1rem}
+.hud span{background:var(--card);border:3px solid var(--ink);border-radius:99px;padding:2px 12px}
+.timer{height:16px;border:3px solid var(--ink);border-radius:99px;background:var(--card);overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--tomato)}
+.itemcard,.qcard{background:var(--card);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);padding:16px;text-align:center}
+.itemcard .big{font-size:5rem;line-height:1.1;display:block}
+.itemcard h2{font-size:2rem}
+.qcard h2{font-size:1.5rem;line-height:1.15}
+.qcard .tag{display:inline-block;background:var(--tomato);border:3px solid var(--ink);border-radius:8px;padding:0 10px;font-family:var(--f-display);margin-bottom:8px;transform:rotate(-2deg)}
+.lead{font-size:1.1rem;text-align:center}
+
+.zones{display:grid;gap:10px}
+.zones.grid{grid-template-columns:1fr 1fr}
+.zones.pyr{justify-items:center}
+.zone{background:var(--zc);border:3px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink);padding:10px 8px;display:grid;gap:2px;width:100%;text-align:center;transition:transform .08s,box-shadow .08s}
+.zone b{font-family:var(--f-display);font-weight:400;font-size:1.25rem}
+.zone small{font-weight:600;font-size:.82rem;line-height:1.2}
+.zones.pyr .zone:nth-child(1){width:56%}
+.zones.pyr .zone:nth-child(2){width:78%}
+.zone:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.zone.right,.opt.right{outline:5px solid var(--leaf);outline-offset:1px}
+.zone.wrong,.opt.wrong{outline:5px solid var(--tomato);outline-offset:1px;opacity:.75}
+
+.opts{display:grid;gap:10px}
+.opt{background:var(--card);border:3px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink);padding:12px 14px;text-align:left;font-weight:800}
+.opt:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+
+/* feedback */
+.fb{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;border:3px solid var(--ink);border-radius:16px;padding:10px;background:var(--card);box-shadow:4px 4px 0 var(--ink);animation:pop .25s ease-out}
+.fb.ok{background:#D7F7E3}
+.fb.no{background:#FFE0D8}
+.fb strong{font-family:var(--f-display);font-weight:400;font-size:1.3rem;display:block}
+.fb p{font-weight:600;font-size:.95rem}
+.fb .btn{margin-top:8px}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.shake{animation:shake .32s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* memes */
+.meme{position:relative;aspect-ratio:1;background:var(--mbg,var(--sky));border:3px solid var(--ink);border-radius:12px;display:grid;place-items:center;overflow:hidden;container-type:inline-size;width:100%}
+.meme .mf{font-size:34cqw;line-height:1}
+.meme .mt,.meme .mb{position:absolute;left:4%;right:4%;text-align:center;font-family:var(--f-meme);color:#fff;text-transform:uppercase;font-size:11cqw;line-height:1.05;letter-spacing:.02em;text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 3px 0 #000;overflow-wrap:anywhere}
+.meme .mt{top:4%}
+.meme .mb{bottom:4%}
+
+/* viaje */
+.track{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.track li{display:flex;align-items:center;gap:12px;background:var(--card);border:3px solid var(--ink);border-radius:14px;padding:8px 12px;font-family:var(--f-display);font-size:1.2rem}
+.track li.done{background:#D7F7E3}
+.track li.now{background:var(--banana);box-shadow:0 4px 0 var(--ink)}
+.track .tk{width:2.4rem;height:2.4rem;border-radius:50%;border:3px solid var(--ink);background:var(--paper);display:grid;place-items:center;flex:none;font-size:1.2rem}
+.tiles{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.tiles .btn{background:var(--c-pink)}
+
+/* mercado */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px}
+.mi{background:var(--card);border:3px solid var(--ink);border-radius:16px;box-shadow:3px 3px 0 var(--ink);overflow:hidden;display:grid}
+.mi.on{background:#D7F7E3;box-shadow:0 0 0 4px var(--leaf),3px 3px 0 var(--ink)}
+.mi .pick{background:none;border:0;padding:10px 8px 4px;display:grid;gap:2px;justify-items:center;text-align:center}
+.mi .big{font-size:2.6rem;line-height:1.1}
+.mi .pr{font-weight:800;color:#0B6B3A}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 8px 8px;min-height:36px}
+.fi{background:none;border:2px dashed var(--ink);border-radius:8px;font-size:.78rem;padding:2px 8px;font-weight:800}
+.fx{font-weight:800;font-size:.85rem}
+.buybar{position:sticky;bottom:8px;background:var(--banana);border:3px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);padding:10px 12px;display:grid;gap:8px;z-index:5}
+.buybar .line{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.buybar .left{font-family:var(--f-display);font-size:1.5rem}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:2px solid var(--ink);border-radius:99px;padding:0 10px;font-size:.85rem;background:var(--card);opacity:.6}
+.chip.on{background:var(--leaf);opacity:1}
+.legend{font-size:.9rem;font-weight:600;text-align:center}
+#msg{min-height:1.3em;font-weight:800;color:#B3261E;text-align:center}
+
+/* resultado */
+.result{text-align:center;justify-items:center}
+.result h1{font-size:2.6rem}
+.bigstars{font-size:3rem;letter-spacing:.12em}
+.result .meme{max-width:300px}
+.menu-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.menu-chips span{background:var(--card);border:2px solid var(--ink);border-radius:99px;padding:0 10px;font-size:.9rem}
+
+/* taller de memes */
+.lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.lab .meme{max-width:360px;justify-self:center}
+.ctl{display:grid;gap:10px}
+.ctl label{font-family:var(--f-display);font-size:1.05rem}
+.ctl input[type=text]{width:100%;font:inherit;font-weight:800;border:3px solid var(--ink);border-radius:12px;padding:8px 12px;background:var(--card);color:var(--ink);text-transform:uppercase}
+.faces,.swatches,.sugs{display:flex;flex-wrap:wrap;gap:8px}
+.faces button{font-size:1.6rem;width:46px;height:46px;border:3px solid var(--ink);border-radius:12px;background:var(--card);padding:0}
+.faces button[aria-pressed=true]{background:var(--banana);box-shadow:0 3px 0 var(--ink)}
+.swatches button{width:36px;height:36px;border-radius:50%;border:3px solid var(--ink);padding:0}
+.swatches button[aria-pressed=true]{box-shadow:0 0 0 3px var(--card),0 0 0 6px var(--ink)}
+.sugs button{background:var(--card);border:2px solid var(--ink);border-radius:10px;padding:4px 10px;font-size:.85rem}
+
+/* diploma */
+.dip{background:var(--card);border:3px solid var(--ink);outline:3px solid var(--ink);outline-offset:-12px;border-radius:18px;padding:32px 22px;text-align:center;display:grid;gap:10px;box-shadow:6px 6px 0 var(--ink)}
+.dip h1{font-size:clamp(1.8rem,8vw,2.8rem)}
+.dip .nm{font-family:var(--f-display);font-size:clamp(1.8rem,8vw,2.6rem);color:var(--berry);overflow-wrap:anywhere}
+
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
+.confetti span{position:absolute;top:-40px;animation:fall 2.2s ease-in forwards}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+
+@media (max-width:560px){
+  .hero{grid-template-columns:1fr}
+  .hero .meme{max-width:210px;justify-self:center}
+  .lab{grid-template-columns:1fr}
+  .fb{grid-template-columns:120px 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+'use strict';
+var app=document.getElementById('app');
+function $(s){return document.querySelector(s)}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function money(n){return '$'+n.toLocaleString('es-CO')}
+
+/* ---------- estado ---------- */
+var KEY='nutriretos-502';
+var S={name:'',prog:{},sound:true};
+try{var raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw&&typeof raw==='object'){S.name=String(raw.name||'');S.prog=raw.prog||{};S.sound=raw.sound!==false}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function totalXP(){var t=0;for(var k in S.prog){t+=S.prog[k].best||0}return t}
+var RANKS=[{x:0,t:'Novato de la lonchera'},{x:200,t:'Aprendiz de cocina'},{x:450,t:'Chef Nutri'},{x:700,t:'Leyenda del plato'}];
+function rankOf(xp){var r=0;for(var i=0;i<RANKS.length;i++){if(xp>=RANKS[i].x)r=i}return r}
+
+/* ---------- sonido y confeti ---------- */
+var ac=null;
+function beep(freqs,dur){
+  if(!S.sound)return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    var t=ac.currentTime;
+    freqs.forEach(function(f,i){
+      var o=ac.createOscillator(),g=ac.createGain();
+      o.type='square';o.frequency.value=f;
+      g.gain.setValueAtTime(0.05,t+i*dur);
+      g.gain.exponentialRampToValueAtTime(0.001,t+i*dur+dur);
+      o.connect(g);g.connect(ac.destination);o.start(t+i*dur);o.stop(t+i*dur+dur);
+    });
+  }catch(e){}
+}
+function sGood(){beep([660,880,1100],0.1)}
+function sBad(){beep([220,150],0.16)}
+function burst(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var em=['🥦','🍎','⭐','🥕','🍌','🎉'],box=document.createElement('div');
+  box.className='confetti';
+  for(var i=0;i<28;i++){
+    var s=document.createElement('span');
+    s.textContent=em[i%em.length];
+    s.style.left=(Math.random()*100)+'%';
+    s.style.animationDelay=(Math.random()*0.5)+'s';
+    s.style.fontSize=(18+Math.random()*22)+'px';
+    box.appendChild(s);
+  }
+  document.body.appendChild(box);
+  setTimeout(function(){box.remove()},2800);
+}
+
+/* ---------- memes ---------- */
+var BG=['#8AD3FF','#FFD23F','#FFB3D6','#7DE0A8','#CFC0FF','#FF9B80'];
+var OK=[
+  {f:'😎',t:'Ese brócoli',b:'no sabe con quién se metió'},
+  {f:'🤓',t:'Me preguntan si sé',b:'Yo: obvio'},
+  {f:'🥳',t:'Correcto',b:'La profe está orgullosa'},
+  {f:'🧠',t:'Cerebro nivel:',b:'nutricionista'},
+  {f:'🤩',t:'Ni la lonchera',b:'me puede parar'},
+  {f:'😏',t:'Era fácil',b:'(no era fácil)'}
+];
+var BAD=[
+  {f:'😵‍💫',t:'Mi cerebro',b:'cargando... 3%'},
+  {f:'🫠',t:'Error 404',b:'respuesta no encontrada'},
+  {f:'🤨',t:'Esa no era',b:'pero vamos bien'},
+  {f:'😭',t:'Me equivoqué',b:'y nadie me avisó'},
+  {f:'🥴',t:'Mi estómago:',b:'¿qué está pasando?'},
+  {f:'🙃',t:'Seguro era',b:'la otra, siempre la otra'}
+];
+function meme(m,bg){
+  var c=bg||BG[Math.floor(Math.random()*BG.length)];
+  return '<div class="meme" style="--mbg:'+c+'" role="img" aria-label="Meme: '+m.t+' '+m.b+'"><span class="mt">'+m.t+'</span><span class="mf">'+m.f+'</span><span class="mb">'+m.b+'</span></div>';
+}
+function fb(ok,head,fact,extra){
+  return '<div class="fb '+(ok?'ok':'no')+'">'+meme(pick(ok?OK:BAD))+'<div><strong>'+head+'</strong><p>'+fact+'</p>'+(extra||'')+'</div></div>';
+}
+
+/* ---------- navegación ---------- */
+var H={},timer=null;
+function stopTimer(){if(timer){clearInterval(timer);timer=null}}
+function go(fn){stopTimer();window.scrollTo(0,0);fn()}
+function bar(title){
+  return '<header class="top"><button class="btn small" data-act="home">← Mapa</button><div class="ttl">'+title+'</div><button class="btn small" data-act="snd" aria-label="Activar o quitar sonido">'+(S.sound?'🔊':'🔇')+'</button></header>';
+}
+var core={
+  home:function(){go(home)},
+  snd:function(){S.sound=!S.sound;save();var b=document.querySelectorAll('[data-act=snd]');for(var i=0;i<b.length;i++)b[i].textContent=S.sound?'🔊':'🔇';if(S.sound)sGood()}
+};
+app.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');
+  if(!el||el.disabled)return;
+  var a=el.getAttribute('data-act');
+  if(core[a])core[a](el);else if(H[a])H[a](el);
+});
+
+/* ---------- retos ---------- */
+var RETOS=[
+  {id:'pir',e:'🔺',t:'Pirámide Express',d:'Clasifica alimentos en base, medio o punta antes de que se acabe el tiempo.',c:'--c-leaf'},
+  {id:'via',e:'🍔',t:'Viaje del Bocado',d:'Ayuda a un bocado a recorrer tu sistema digestivo en el orden correcto.',c:'--c-pink'},
+  {id:'cad',e:'🦁',t:'¿Quién se come a quién?',d:'Productores, herbívoros, carnívoros u omnívoros. ¿Dónde quedas tú?',c:'--c-sky'},
+  {id:'mer',e:'🛒',t:'Mercado Nutritivo',d:'Arma el menú de tu día con $20.000 de mentiras.',c:'--c-banana'},
+  {id:'cie',e:'🧪',t:'Ciencia Loca',d:'Células, energía, plantas, calorías y máquinas simples. Hay mitos.',c:'--c-lav'},
+  {id:'col',e:'🗺️',t:'Colombia y el Desperdicio',d:'De dónde viene la comida, por qué cuesta lo que cuesta y qué pasa si la botas.',c:'--c-tomato'}
+];
+function reto(id){for(var i=0;i<RETOS.length;i++)if(RETOS[i].id===id)return RETOS[i]}
+function stars(n){return '★★★'.slice(0,n)+'☆☆☆'.slice(0,3-n)}
+
+function home(){
+  H={
+    save:function(){var v=$('#nm').value.trim();if(!v){$('#nm').focus();return}S.name=v.slice(0,20);save();home()},
+    open:function(el){openReto(el.getAttribute('data-id'))},
+    memes:function(){go(memeLab)},
+    dip:function(){go(diploma)},
+    nolock:function(){var m=$('#lockmsg');if(m)m.textContent='Completa 3 retos para abrir el taller de memes.';sBad()}
+  };
+  var xp=totalXP(),ri=rankOf(xp),nx=RANKS[ri+1];
+  var done=RETOS.filter(function(r){return S.prog[r.id]}).length;
+  var pct=nx?Math.round((xp-RANKS[ri].x)/(nx.x-RANKS[ri].x)*100):100;
+  var cards=RETOS.map(function(r){
+    var p=S.prog[r.id];
+    return '<button class="reto" style="--c:var('+r.c+')" data-act="open" data-id="'+r.id+'"><span class="em">'+r.e+'</span><h3>'+r.t+'</h3><p>'+r.d+'</p><span class="st" aria-label="'+(p?p.stars:0)+' de 3 estrellas">'+stars(p?p.stars:0)+'</span></button>';
+  }).join('');
+  var lab=done>=3
+    ?'<button class="reto" style="--c:var(--c-pink)" data-act="memes"><span class="em">😂</span><h3>Taller de memes</h3><p>Crea tu propio meme nutritivo y muéstraselo a tus compañeros.</p></button>'
+    :'<button class="reto lock" data-act="nolock"><span class="em">🔒</span><h3>Taller de memes</h3><p id="lockmsg">Se abre al completar 3 retos.</p></button>';
+  app.innerHTML=
+    '<section class="hero"><div><h1 class="logo">NUTRI<br><span>RETOS</span></h1>'+
+    '<p class="sub">Grado 502 · Alimentación saludable. Elige un reto, gana estrellas y sube de rango.</p>'+
+    '<div class="namebox"><input id="nm" type="text" maxlength="20" placeholder="Escribe tu nombre" aria-label="Tu nombre" value="'+S.name.replace(/"/g,'&quot;')+'"><button class="btn small go" data-act="save">'+(S.name?'Cambiar':'Guardar')+'</button></div></div>'+
+    meme({f:'😐',t:'Cuando la lonchera',b:'trae solo fruta'},'#FFD23F')+'</section>'+
+    '<section class="rank"><div class="rt"><b>'+(S.name?S.name+' · ':'')+RANKS[ri].t+'</b><span>'+xp+' XP'+(nx?' · próximo rango: '+nx.x:'')+'</span></div><div class="xpbar"><i style="width:'+pct+'%"></i></div></section>'+
+    (done===RETOS.length?'<section class="win"><b>¡Completaste los 6 retos'+(S.name?', '+S.name:'')+'! 🏆</b><button class="btn" data-act="dip">Ver mi diploma</button></section>':'')+
+    '<section class="map">'+cards+lab+'</section>';
+  var inp=$('#nm');
+  if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter')H.save()});
+}
+
+function openReto(id){
+  go(function(){
+    if(id==='pir')classify(PIR);
+    else if(id==='via')viaje();
+    else if(id==='cad')classify(CAD);
+    else if(id==='mer')mercado();
+    else if(id==='cie')quiz(CIE);
+    else if(id==='col')quiz(COL);
+  });
+}
+
+/* ---------- resultado ---------- */
+function result(id,score,st,msg,again,extraHTML){
+  var R=reto(id),prev=S.prog[id]||{best:0,stars:0};
+  var gain=Math.max(0,score-prev.best);
+  if(st>=1){S.prog[id]={best:Math.max(prev.best,score),stars:Math.max(prev.stars,st)};save()}
+  if(st>=2){burst();sGood()}else if(st===0){sBad()}else{sGood()}
+  H={again:function(){go(again)}};
+  var heads=['¡Casi!','¡Bien!','¡Muy bien!','¡PERFECTO!'];
+  app.innerHTML=bar(R.t)+'<section class="play result"><h1>'+heads[st]+'</h1><div class="bigstars" aria-label="'+st+' de 3 estrellas">'+stars(st)+'</div>'+
+    '<p>'+score+' puntos'+(gain&&st>=1?' · +'+gain+' XP nuevos':'')+'</p>'+
+    meme(pick(st>=2?OK:BAD))+(extraHTML||'')+'<p>'+msg+'</p>'+
+    '<div class="row"><button class="btn go" data-act="again">Jugar otra vez</button><button class="btn alt" data-act="home">Volver al mapa</button></div></section>';
+}
+function starsByRatio(r){return r>=0.9?3:r>=0.7?2:r>=0.4?1:0}
+var NEEDMSG='Necesitas al menos 1 estrella para marcar el reto. ¡Intenta otra vez!';
+
+/* ---------- juego de clasificar ---------- */
+var PIR={
+  id:'pir',n:10,time:9,layout:'pyr',
+  zones:[
+    {k:'p',l:'Punta',s:'Azúcares y ultraprocesados: poquito',c:'--c-tomato'},
+    {k:'m',l:'Medio',s:'Frutas, verduras, proteínas y lácteos',c:'--c-banana'},
+    {k:'b',l:'Base',s:'Cereales, papa y granos: la energía diaria',c:'--c-leaf'}
+  ],
+  items:[
+    {e:'🍚',n:'Arroz',z:'b',f:'Los cereales dan la energía para jugar y estudiar.'},
+    {e:'🥔',n:'Papa',z:'b',f:'Es un tubérculo. Sin fritura es energía de la buena.'},
+    {e:'🍞',n:'Pan',z:'b',f:'Viene de un cereal, el trigo. Va en la base.'},
+    {e:'🌽',n:'Maíz',z:'b',f:'El maíz es un cereal. De ahí salen las arepas.'},
+    {e:'🍝',n:'Pasta',z:'b',f:'Se hace con trigo. Es de la base de la pirámide.'},
+    {e:'🥣',n:'Avena',z:'b',f:'Cereal con fibra. Un desayuno que rinde.'},
+    {e:'🍎',n:'Manzana',z:'m',f:'Las frutas dan vitaminas y fibra.'},
+    {e:'🥕',n:'Zanahoria',z:'m',f:'Verdura con vitamina A, buena para la vista.'},
+    {e:'🥦',n:'Brócoli',z:'m',f:'Verdura llena de vitaminas. Sí, también va en memes.'},
+    {e:'🥛',n:'Leche',z:'m',f:'Los lácteos tienen calcio para huesos y dientes.'},
+    {e:'🥚',n:'Huevo',z:'m',f:'Proteína para crecer y reparar tu cuerpo.'},
+    {e:'🍗',n:'Pollo',z:'m',f:'Las carnes dan proteína y hierro.'},
+    {e:'🐟',n:'Pescado',z:'m',f:'Proteína y grasas buenas para el cerebro.'},
+    {e:'🍅',n:'Tomate',z:'m',f:'Es una fruta que comemos como verdura.'},
+    {e:'🍌',n:'Banano',z:'m',f:'Fruta con energía rápida y potasio.'},
+    {e:'🥑',n:'Aguacate',z:'m',f:'Fruta con grasas buenas.'},
+    {e:'🥤',n:'Gaseosa',z:'p',f:'Tiene mucha azúcar añadida. De vez en cuando.'},
+    {e:'🍫',n:'Chocolatina',z:'p',f:'Mucha azúcar y grasa. Se disfruta poquito.'},
+    {e:'🍟',n:'Papas de paquete',z:'p',f:'Mucha sal y grasa. Son ultraprocesadas.'},
+    {e:'🍩',n:'Dona',z:'p',f:'Dulce y frita: va en la punta.'},
+    {e:'🍬',n:'Caramelos',z:'p',f:'Casi puro azúcar. Punta total.'},
+    {e:'🍦',n:'Helado',z:'p',f:'Rico, pero con mucha azúcar. Para los antojos.'}
+  ]
+};
+var CAD={
+  id:'cad',n:10,time:10,layout:'grid',
+  zones:[
+    {k:'pr',l:'Productor',s:'Hace su comida con el sol',c:'--c-leaf'},
+    {k:'h',l:'Herbívoro',s:'Come plantas',c:'--c-banana'},
+    {k:'c',l:'Carnívoro',s:'Come animales',c:'--c-tomato'},
+    {k:'o',l:'Omnívoro',s:'Come de todo',c:'--c-lav'}
+  ],
+  items:[
+    {e:'🌿',n:'Pasto',z:'pr',f:'Los productores hacen su comida con luz solar. Son la base de toda cadena.'},
+    {e:'🌳',n:'Árbol',z:'pr',f:'Con fotosíntesis fabrica su alimento y suelta oxígeno.'},
+    {e:'🐄',n:'Vaca',z:'h',f:'Solo come plantas, como pasto y heno.'},
+    {e:'🐇',n:'Conejo',z:'h',f:'Come hojas, zanahorias y pasto. Herbívoro total.'},
+    {e:'🦁',n:'León',z:'c',f:'Se alimenta de otros animales.'},
+    {e:'🦈',n:'Tiburón',z:'c',f:'Carnívoro: come peces y otros animales marinos.'},
+    {e:'🦅',n:'Águila',z:'c',f:'Caza ratones, peces y otras presas.'},
+    {e:'🐻',n:'Oso',z:'o',f:'Come frutos, raíces, peces y más. Omnívoro.'},
+    {e:'🐔',n:'Gallina',z:'o',f:'Come granos, semillas e insectos.'},
+    {e:'🐖',n:'Cerdo',z:'o',f:'Come plantas y animales pequeños.'},
+    {e:'🧑',n:'Tú (el ser humano)',z:'o',f:'Spoiler: ¡eres omnívoro! Tu cuerpo necesita plantas y también proteínas.'}
+  ]
+};
+function classify(cfg){
+  var items=shuffle(cfg.items).slice(0,cfg.n),i=0,score=0,streak=0,right=0,locked=false;
+  var R=reto(cfg.id);
+  function zl(k){for(var j=0;j<cfg.zones.length;j++)if(cfg.zones[j].k===k)return cfg.zones[j].l}
+  function show(){
+    locked=false;
+    var it=items[i];
+    app.innerHTML=bar(R.t)+'<section class="play">'+
+      '<div class="hud"><span>'+(i+1)+'/'+items.length+'</span><span>Racha '+streak+' 🔥</span><span>'+score+' pts</span></div>'+
+      '<div class="timer" aria-hidden="true"><i id="tb"></i></div>'+
+      '<div class="itemcard"><span class="big">'+it.e+'</span><h2>'+it.n+'</h2></div>'+
+      '<div class="zones '+cfg.layout+'">'+cfg.zones.map(function(z){
+        return '<button class="zone" data-act="z" data-z="'+z.k+'" style="--zc:var('+z.c+')"><b>'+z.l+'</b><small>'+z.s+'</small></button>';
+      }).join('')+'</div><div id="fb" aria-live="polite"></div></section>';
+    H={z:function(el){answer(el.getAttribute('data-z'))}};
+    stopTimer();
+    var t0=Date.now(),tb=$('#tb');
+    timer=setInterval(function(){
+      var p=1-(Date.now()-t0)/(cfg.time*1000);
+      if(tb)tb.style.width=Math.max(0,p*100)+'%';
+      if(p<=0){stopTimer();answer(null)}
+    },80);
+  }
+  function answer(z){
+    if(locked)return;
+    locked=true;stopTimer();
+    var it=items[i],ok=z===it.z;
+    var zs=document.querySelectorAll('.zone');
+    for(var j=0;j<zs.length;j++){
+      var k=zs[j].getAttribute('data-z');
+      zs[j].disabled=true;
+      if(k===it.z)zs[j].classList.add('right');
+      else if(k===z)zs[j].classList.add('wrong');
+    }
+    var head;
+    if(ok){streak++;right++;score+=10+Math.min(streak-1,5)*2;head=pick(['¡Bacano!','¡Eso!','¡Correcto!']);sGood()}
+    else{streak=0;head=z===null?'¡Se acabó el tiempo! Iba en '+zl(it.z):'Va en '+zl(it.z);sBad();$('.itemcard').classList.add('shake')}
+    var last=i===items.length-1;
+    $('#fb').innerHTML=fb(ok,head,it.f,'<button class="btn go" data-act="next">'+(last?'Ver resultado':'Siguiente ▶')+'</button>');
+    $('#fb').scrollIntoView({block:'nearest',behavior:'smooth'});
+    H.next=function(){i++;if(i<items.length)show();else finish()};
+  }
+  function finish(){
+    var st=starsByRatio(right/items.length);
+    result(cfg.id,score,st,st>=1?'Acertaste '+right+' de '+items.length+'.':NEEDMSG,function(){classify(cfg)});
+  }
+  show();
+}
+
+/* ---------- viaje del bocado ---------- */
+var ORG=[
+  {n:'Boca',f:'Los dientes trituran y la saliva empieza a descomponer lo que comes.'},
+  {n:'Esófago',f:'Es un tubo que empuja el bocado hacia abajo con movimientos de ola.'},
+  {n:'Estómago',f:'Mezcla el bocado con jugos hasta volverlo una papilla.'},
+  {n:'Intestino delgado',f:'Aquí los nutrientes pasan a la sangre. ¡Es larguísimo, mide varios metros!'},
+  {n:'Intestino grueso',f:'Absorbe agua y se encarga de lo que tu cuerpo no necesita.'}
+];
+function viaje(){
+  var step=0,mist=0,streakBad=0,food=pick(['🍔','🍕','🌮','🥪','🍗']);
+  var order=shuffle(ORG.map(function(o,i){return i}));
+  var last='';
+  function show(){
+    app.innerHTML=bar('Viaje del Bocado')+'<section class="play">'+
+      '<p class="lead">Toca los órganos en el orden en que pasa el bocado '+food+'</p>'+
+      '<ol class="track">'+ORG.map(function(o,i){
+        return '<li class="'+(i<step?'done':i===step?'now':'')+'"><span class="tk">'+(i<step?'✔':i===step?food:(i+1))+'</span><span>'+(i<step?o.n:'¿?')+'</span></li>';
+      }).join('')+'</ol>'+
+      '<div class="tiles">'+order.filter(function(i){return i>=step}).map(function(i){
+        return '<button class="btn" data-act="t" data-i="'+i+'">'+ORG[i].n+'</button>';
+      }).join('')+'</div><div id="fb" aria-live="polite">'+last+'</div></section>';
+    H={t:function(el){tap(parseInt(el.getAttribute('data-i'),10))}};
+  }
+  function tap(i){
+    if(i===step){
+      sGood();streakBad=0;
+      last=fb(true,ORG[i].n+'. ¡Sigue!',ORG[i].f);
+      step++;
+      if(step===ORG.length){
+        var st=mist===0?3:mist<=2?2:1;
+        result('via',Math.max(20,100-mist*15),st,mist===0?'Recorrido perfecto, sin una sola equivocación.':'Te equivocaste '+mist+(mist===1?' vez':' veces')+'. Con práctica sale perfecto.',viaje);
+        return;
+      }
+      show();
+    }else{
+      sBad();mist++;streakBad++;
+      last=fb(false,'Todavía no pasa por ahí',streakBad>=2?'Pista: el siguiente empieza con "'+ORG[step].n.charAt(0)+'".':'Piensa: ¿qué órgano sigue después de '+(step===0?'que te llevas la comida a la boca':ORG[step-1].n)+'?');
+      show();
+      var tl=$('.tiles');if(tl)tl.classList.add('shake');
+    }
+  }
+  show();
+}
+
+/* ---------- mercado ---------- */
+var MER=[
+  {n:'Manzana',e:'🍎',p:1500,g:4,b:0,t:'fruta'},
+  {n:'Banano',e:'🍌',p:1000,g:4,b:0,t:'fruta'},
+  {n:'Zanahoria',e:'🥕',p:1200,g:4,b:0,t:'verdura'},
+  {n:'Espinaca',e:'🥬',p:1800,g:5,b:0,t:'verdura'},
+  {n:'Tomate',e:'🍅',p:1500,g:3,b:0,t:'verdura'},
+  {n:'Huevos',e:'🥚',p:2500,g:4,b:1,t:'prot'},
+  {n:'Pollo',e:'🍗',p:6000,g:4,b:1,t:'prot'},
+  {n:'Leche',e:'🥛',p:2800,g:4,b:1,t:'prot'},
+  {n:'Lentejas',e:'🫘',p:2000,g:5,b:0,t:'prot'},
+  {n:'Arroz',e:'🍚',p:2500,g:3,b:0,t:'grano'},
+  {n:'Avena',e:'🥣',p:2200,g:4,b:0,t:'grano'},
+  {n:'Papa',e:'🥔',p:1800,g:3,b:0,t:'grano'},
+  {n:'Agua',e:'💧',p:1000,g:2,b:0,t:'agua'},
+  {n:'Gaseosa',e:'🥤',p:3500,g:0,b:5,t:'ultra'},
+  {n:'Papas de paquete',e:'🍟',p:2800,g:1,b:4,t:'ultra'},
+  {n:'Chocolatina',e:'🍫',p:2000,g:0,b:4,t:'ultra'},
+  {n:'Perro caliente',e:'🌭',p:6000,g:1,b:5,t:'ultra'},
+  {n:'Jugo de caja',e:'🧃',p:2500,g:0,b:4,t:'ultra'}
+];
+var GROUPS=[{k:'fruta',l:'Fruta'},{k:'verdura',l:'Verdura'},{k:'prot',l:'Proteína'},{k:'grano',l:'Cereal o papa'}];
+function mercado(){
+  var BUD=20000,sel={},info={};
+  function spent(){var t=0;for(var k in sel)if(sel[k])t+=MER[k].p;return t}
+  function cnt(){var t=0;for(var k in sel)if(sel[k])t++;return t}
+  function covered(g){for(var k in sel)if(sel[k]&&MER[k].t===g)return true;return false}
+  app.innerHTML=bar('Mercado Nutritivo')+'<section class="play">'+
+    '<p class="lead">Tienes <b>'+money(BUD)+'</b> de mentiras. Arma tu menú del día con fruta, verdura, proteína y cereal.</p>'+
+    '<p class="legend">En la ficha: ⚡ energía, vitaminas y fibra (más es mejor) · 🍬 azúcar y grasas (menos es mejor)</p>'+
+    '<div class="mgrid" id="grid"></div><div id="msg" aria-live="polite"></div>'+
+    '<div class="buybar"><div class="line"><span>Te quedan</span><span class="left" id="left"></span><span><b id="cnt">0</b> productos</span></div>'+
+    '<div class="chips" id="chips"></div><button class="btn go" data-act="pay">Pagar y ver mi menú</button></div></section>';
+  function paint(){
+    $('#grid').innerHTML=MER.map(function(m,i){
+      var on=!!sel[i],inf=!!info[i];
+      return '<div class="mi'+(on?' on':'')+'"><button class="pick" data-act="tog" data-i="'+i+'" aria-pressed="'+on+'"><span class="big">'+m.e+'</span><b>'+m.n+'</b><span class="pr">'+money(m.p)+'</span></button>'+
+        '<div class="mrow"><button class="fi" data-act="info" data-i="'+i+'">'+(inf?'Ocultar':'Ver ficha')+'</button>'+(inf?'<span class="fx">⚡'+m.g+' · 🍬'+m.b+'</span>':'')+'</div></div>';
+    }).join('');
+    $('#left').textContent=money(BUD-spent());
+    $('#cnt').textContent=cnt();
+    $('#chips').innerHTML=GROUPS.map(function(g){return '<span class="chip'+(covered(g.k)?' on':'')+'">'+(covered(g.k)?'✔ ':'')+g.l+'</span>'}).join('');
+  }
+  var msgT=null;
+  function say(t){var m=$('#msg');if(!m)return;m.textContent=t;clearTimeout(msgT);msgT=setTimeout(function(){m.textContent=''},2200)}
+  H={
+    tog:function(el){
+      var i=parseInt(el.getAttribute('data-i'),10);
+      if(sel[i]){sel[i]=false}
+      else if(spent()+MER[i].p>BUD){sBad();say('No te alcanza para '+MER[i].n.toLowerCase()+'. Quita algo o busca más barato.');return}
+      else{sel[i]=true}
+      paint();
+    },
+    info:function(el){var i=parseInt(el.getAttribute('data-i'),10);info[i]=!info[i];paint()},
+    pay:function(){
+      var picked=[],good=0,bad=0,sp=spent();
+      for(var k in sel)if(sel[k]){picked.push(MER[k]);good+=MER[k].g;bad+=MER[k].b}
+      if(!picked.length){sBad();say('Elige al menos un producto.');return}
+      var miss=GROUPS.filter(function(g){return !covered(g.k)}).map(function(g){return g.l.toLowerCase()});
+      var gc=GROUPS.length-miss.length;
+      var st=(gc===4&&bad<=3)?3:(gc>=3&&bad<=6)?2:1;
+      var score=Math.max(0,good*5-bad*6+gc*20);
+      var msg=[];
+      if(miss.length)msg.push('Te faltó: '+miss.join(', ')+'.');
+      if(bad>6)msg.push('Tu menú tiene mucha azúcar y grasa (🍬'+bad+'). Cambia algún ultraprocesado por algo natural.');
+      else if(bad>3)msg.push('Vas bien, pero baja un poco el azúcar y las grasas (🍬'+bad+').');
+      if(!msg.length)msg.push('Menú balanceado y con poca azúcar. Gastaste '+money(sp)+' de '+money(BUD)+'.');
+      var chips='<div class="menu-chips">'+picked.map(function(m){return '<span>'+m.e+' '+m.n+'</span>'}).join('')+'</div>';
+      result('mer',score,st,msg.join(' '),mercado,chips);
+    }
+  };
+  paint();
+}
+
+/* ---------- quiz ---------- */
+var CIE={id:'cie',n:8,qs:[
+  {q:'¿Cuál es la unidad más pequeña que forma a todos los seres vivos?',o:['La célula','El órgano','El hueso','El músculo'],f:'Tu cuerpo tiene billones de células. Cada una tiene su trabajo.'},
+  {q:'Tus células necesitan energía para funcionar. ¿De dónde la sacan?',o:['De los nutrientes de la comida y del oxígeno','Solo del sueño','De la luz de la pantalla','De las medias de colores'],f:'La comida se convierte en nutrientes y las células usan oxígeno para sacarles energía.'},
+  {tag:'Mito o verdad',q:'Las calorías son malas y hay que evitarlas todas.',o:['Mito: son energía y tu cuerpo necesita las justas','Verdad: mientras menos calorías, mejor'],f:'Una caloría es una unidad de energía. Lo importante es que vengan de alimentos nutritivos.'},
+  {q:'¿Qué hacen las plantas con la luz del sol?',o:['Fabrican su propio alimento (fotosíntesis)','La usan para dormir','Nada, solo les da calor','La guardan en las raíces como pilas'],f:'Con luz, agua y aire las plantas hacen su comida y sueltan oxígeno.'},
+  {q:'La zanahoria es la ____ de la planta.',o:['Raíz','Hoja','Flor','Semilla'],f:'Comemos raíces (zanahoria), hojas (lechuga), flores (brócoli) y frutos (tomate).'},
+  {q:'¿Cuál NO es una máquina simple?',o:['La licuadora','La polea','La palanca','El plano inclinado'],f:'Las máquinas simples son palanca, polea, plano inclinado, rueda y eje, tornillo y cuña. La licuadora usa motor.'},
+  {q:'¿Para qué sirve una polea?',o:['Para subir cosas con menos esfuerzo','Para cocinar más rápido','Para medir la temperatura','Para sembrar semillas'],f:'Por ejemplo, subir un balde de agua desde un pozo.'},
+  {q:'¿Dónde pasan la mayoría de los nutrientes a la sangre?',o:['En el intestino delgado','En el esófago','En la boca','En el intestino grueso'],f:'Es larguísimo para tener más superficie y absorber más nutrientes.'},
+  {tag:'Mito o verdad',q:'Si me salto el desayuno tengo más energía en el colegio.',o:['Mito: sin desayuno tus células se quedan sin combustible','Verdad: el hambre da superpoderes'],f:'Pasaste muchas horas sin comer mientras dormías. El desayuno te ayuda a concentrarte.'},
+  {q:'Una cadena alimenticia siempre empieza con…',o:['Un productor, como una planta','Un carnívoro','Un omnívoro','Un herbívoro'],f:'Sin plantas no hay quién capture la energía del sol.'}
+]};
+var COL={id:'col',n:8,qs:[
+  {q:'El café colombiano se cultiva mucho en…',o:['El Eje Cafetero (Caldas, Quindío, Risaralda)','El desierto de La Guajira','La isla de San Andrés','La selva del Amazonas'],f:'El café crece en zonas de montaña con clima templado.'},
+  {q:'La papa se cultiva mucho en…',o:['Boyacá y Cundinamarca, donde hace frío','La costa Caribe, donde hace calor','La selva del Chocó','Las playas de San Andrés'],f:'La papa prefiere clima frío de zonas altas.'},
+  {q:'El banano se produce mucho en…',o:['Urabá (Antioquia) y Magdalena, donde hace calor','Los páramos, donde hace mucho frío','El desierto de La Guajira','El centro de Bogotá'],f:'El banano necesita calor y mucha agua.'},
+  {q:'El arroz de Colombia se cultiva mucho en…',o:['Tolima y los Llanos Orientales (Meta y Casanare)','Los páramos de Boyacá','Solo en Bogotá','Las islas del Caribe'],f:'Necesita terrenos planos y mucha agua.'},
+  {q:'Un tomate viaja del campo a la ciudad. ¿Por qué cuesta más en el supermercado que en la finca?',o:['Por el transporte, el almacenamiento y los intermediarios','Porque en la ciudad el tomate es de otro color','Porque el supermercado lo cultiva en el techo','No cuesta más, es lo mismo'],f:'Mientras más lejos y más pasos, más se encarece el alimento.'},
+  {q:'Hay derrumbes y las vías están cerradas. ¿Qué pasa con el precio de los alimentos en la ciudad?',o:['Sube, porque llegan menos y transportarlos es más difícil','Baja, porque sobra comida','Queda igual','Se vuelve gratis'],f:'Cuando llega menos producto, los precios suben.'},
+  {q:'Te sobró comida en el plato. ¿Qué es lo mejor para evitar el desperdicio?',o:['Servirme poquito y repetir si todavía tengo hambre','Servirme lo máximo y botar lo que sobre','Esconderla debajo de la mesa','Cambiarla por una gaseosa'],f:'Servir de a poco ayuda a que no se bote comida.'},
+  {tag:'Mito o verdad',q:'Cuando botas comida también botas el agua, la energía y el trabajo que costó producirla.',o:['Verdad: todo eso se pierde con ella','Mito: la comida se hace sola y no cuesta nada'],f:'Producir alimentos gasta agua, energía y el esfuerzo de muchas personas.'},
+  {q:'¿Cuánta comida se pierde o se desperdicia en Colombia?',o:['Cerca de una tercera parte','Casi nada, menos del 1%','Más del 90%','Exactamente la mitad'],f:'Según estudios del DNP, cerca de un tercio de los alimentos se pierde entre el campo y la mesa. Tú puedes ayudar a que sea menos.'}
+]};
+function quiz(cfg){
+  var R=reto(cfg.id);
+  var qs=shuffle(cfg.qs).slice(0,cfg.n).map(function(q){
+    var o=q.o.map(function(t,k){return {t:t,ok:k===0}});
+    return {q:q.q,tag:q.tag,f:q.f,o:shuffle(o)};
+  });
+  var i=0,score=0,streak=0,right=0,locked=false;
+  function show(){
+    locked=false;
+    var q=qs[i];
+    app.innerHTML=bar(R.t)+'<section class="play">'+
+      '<div class="hud"><span>'+(i+1)+'/'+qs.length+'</span><span>Racha '+streak+' 🔥</span><span>'+score+' pts</span></div>'+
+      '<div class="qcard">'+(q.tag?'<span class="tag">'+q.tag+'</span>':'')+'<h2>'+q.q+'</h2></div>'+
+      '<div class="opts">'+q.o.map(function(o,k){return '<button class="opt" data-act="o" data-k="'+k+'">'+o.t+'</button>'}).join('')+'</div>'+
+      '<div id="fb" aria-live="polite"></div></section>';
+    H={o:function(el){answer(parseInt(el.getAttribute('data-k'),10))}};
+  }
+  function answer(k){
+    if(locked)return;
+    locked=true;
+    var q=qs[i],ok=q.o[k].ok;
+    var bs=document.querySelectorAll('.opt');
+    for(var j=0;j<bs.length;j++){
+      bs[j].disabled=true;
+      if(q.o[j].ok)bs[j].classList.add('right');
+      else if(j===k)bs[j].classList.add('wrong');
+    }
+    var head;
+    if(ok){streak++;right++;score+=15+Math.min(streak-1,5)*2;head=pick(['¡Bacano!','¡Eso!','¡Correcto!']);sGood()}
+    else{streak=0;head='Esa no era';sBad();$('.qcard').classList.add('shake')}
+    var last=i===qs.length-1;
+    $('#fb').innerHTML=fb(ok,head,q.f,'<button class="btn go" data-act="next">'+(last?'Ver resultado':'Siguiente ▶')+'</button>');
+    $('#fb').scrollIntoView({block:'nearest',behavior:'smooth'});
+    H.next=function(){i++;if(i<qs.length)show();else finish()};
+  }
+  function finish(){
+    var st=starsByRatio(right/qs.length);
+    result(cfg.id,score,st,st>=1?'Acertaste '+right+' de '+qs.length+'.':NEEDMSG,function(){quiz(cfg)});
+  }
+  show();
+}
+
+/* ---------- taller de memes ---------- */
+function memeLab(){
+  var st={f:'🥦',bg:0,t:'Cuando me dicen',b:'que hay brócoli hoy'};
+  var FACES=['🥦','🍎','🍌','🥕','🍔','🥤','😎','🤪','🐄','🦁'];
+  var SUG=[['Cuando la profe dice','vamos a hacer una actividad'],['Yo escogiendo fruta','mi estómago: gracias'],['La gaseosa:','soy saludable. Tu estómago: no'],['Mi cerebro con desayuno','vs mi cerebro sin desayuno']];
+  H={
+    face:function(el){st.f=el.getAttribute('data-f');paintCtl();paintPrev()},
+    bg:function(el){st.bg=parseInt(el.getAttribute('data-i'),10);paintCtl();paintPrev()},
+    sug:function(el){var s=SUG[parseInt(el.getAttribute('data-i'),10)];st.t=s[0];st.b=s[1];$('#tt').value=st.t;$('#bt').value=st.b;paintPrev()}
+  };
+  app.innerHTML=bar('Taller de memes')+'<section class="play"><p class="lead">Crea tu meme nutritivo. Para compartirlo, toma una captura de pantalla.</p>'+
+    '<div class="lab"><div id="prev"></div><div class="ctl">'+
+    '<div><label for="tt">Texto de arriba</label><input id="tt" type="text" maxlength="34" value="'+st.t+'"></div>'+
+    '<div><label for="bt">Texto de abajo</label><input id="bt" type="text" maxlength="34" value="'+st.b+'"></div>'+
+    '<div><label>Cara</label><div class="faces" id="faces"></div></div>'+
+    '<div><label>Color</label><div class="swatches" id="sw"></div></div>'+
+    '<div><label>Ideas</label><div class="sugs">'+SUG.map(function(s,i){return '<button data-act="sug" data-i="'+i+'">'+s[0]+'…</button>'}).join('')+'</div></div>'+
+    '</div></div></section>';
+  function paintPrev(){$('#prev').innerHTML=meme({f:st.f,t:st.t||' ',b:st.b||' '},BG[st.bg])}
+  function paintCtl(){
+    $('#faces').innerHTML=FACES.map(function(f){return '<button data-act="face" data-f="'+f+'" aria-pressed="'+(f===st.f)+'" aria-label="Cara '+f+'">'+f+'</button>'}).join('');
+    $('#sw').innerHTML=BG.map(function(c,i){return '<button data-act="bg" data-i="'+i+'" style="background:'+c+'" aria-pressed="'+(i===st.bg)+'" aria-label="Color '+(i+1)+'"></button>'}).join('');
+  }
+  $('#tt').addEventListener('input',function(e){st.t=e.target.value;paintPrev()});
+  $('#bt').addEventListener('input',function(e){st.b=e.target.value;paintPrev()});
+  paintCtl();paintPrev();
+}
+
+/* ---------- diploma ---------- */
+function diploma(){
+  var xp=totalXP(),d=new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});
+  H={};
+  burst();
+  app.innerHTML=bar('Mi diploma')+'<section class="play"><div class="dip"><p>🏆</p><h1>Diploma Nutri Retos</h1><p>Se le otorga a</p><div class="nm">'+(S.name||'Nutri-experto/a')+'</div>'+
+    '<p>por completar los 6 retos de alimentación saludable en el grado 502.</p><p><b>Rango: '+RANKS[rankOf(xp)].t+'</b> · '+xp+' XP</p><p>'+d+'</p></div>'+
+    '<p class="lead">Toma una captura de pantalla para guardarlo.</p></section>';
+}
+
+home();
+})();
+</script>
+</body>
+</html>
